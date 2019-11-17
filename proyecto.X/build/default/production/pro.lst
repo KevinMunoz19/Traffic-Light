@@ -1,0 +1,1991 @@
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 #include "p16f887.inc"
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ; Build date : Sep 19 2017
+                      00005 ;  MPASM PIC16F887 processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2017 Microchip Technology, All rights reserved
+                      00008 ;==========================================================================
+                      00009 
+                      00810         LIST
+                      00002 
+                      00003 ; CONFIG1
+                      00004 ; __config 0xE895
+2007   2895           00005  __CONFIG _CONFIG1, _FOSC_INTRC_CLKOUT & _WDTE_OFF & _PWRTE_OFF & _MCLRE_OFF & _CP_ON & _CPD_OFF & _BORE
+                            N_OFF & _IESO_OFF & _FCMEN_ON & _LVP_OFF
+                      00006 ; CONFIG2
+                      00007 ; __config 0xFFFF
+2008   3FFF           00008  __CONFIG _CONFIG2, _BOR4V_BOR40V & _WRT_OFF
+                      00009 
+                      00010 
+                      00011 GPR_VAR    UDATA
+                      00012     
+Warning[207]: Found label after column 1. (COUNTER)
+0000                  00013     COUNTER RES 1               ;TMR0 REPEAT COUNTER
+Warning[207]: Found label after column 1. (ONESECTIMER)
+0001                  00014     ONESECTIMER   RES   1       ;COUNTS TO 1 SEC
+Warning[207]: Found label after column 1. (PHASETIMER)
+0002                  00015     PHASETIMER  RES 1           ;COUNTS TOWARDS SPECIFIC TIMES
+Warning[207]: Found label after column 1. (CONTROL)
+0003                  00016     CONTROL RES 1               ;MODE BIT CONTROL
+                      00017                                 ;BIT 0 DAY MODE
+                      00018                                 ;BIT 1 AFTERNOON MODE
+                      00019                                 ;BIT 2 NIGHT MODE
+                      00020                                 ;BIT 3 MANUAL MODE
+Warning[207]: Found label after column 1. (SECTIMER)
+0004                  00021     SECTIMER    RES 1
+Warning[207]: Found label after column 1. (CHANGEVAR)
+0005                  00022     CHANGEVAR   RES 1
+Warning[207]: Found label after column 1. (TM)
+0006                  00023         TM  RES 1
+Warning[207]: Found label after column 1. (TIMERTWOFIVE)
+0007                  00024         TIMERTWOFIVE    RES 1
+Warning[207]: Found label after column 1. (D2)
+0008                  00025         D2  RES 1
+Warning[207]: Found label after column 1. (D1)
+0009                  00026         D1  RES 1
+                      00027 
+                      00028 
+                      00029 RES_VECT  CODE    0x0000        ; processor reset vector
+0000   2???           00030     GOTO    SETUP   
+                      00031  
+                      00032     
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00033 ISR_VECT CODE 0X0004
+0004   138B           00034  BCF INTCON, GIE                ;CLEARED TO DISBLE FURTHER INTERRUPTS
+                      00035  
+                      00036  
+0005   1806           00037  BTFSC PORTB, RB0               ;CHECK STATE OF RB0 (DAY)
+0006   2???           00038  GOTO DY
+0007   1886           00039  BTFSC PORTB, RB1               ;CHECK STATE OF RB1 (AFTERNOON)
+0008   2???           00040  GOTO AN
+0009   1906           00041  BTFSC PORTB, RB2               ;CHECK STATE OF RB2 (NIGHT)
+000A   2???           00042  GOTO NG
+000B   1986           00043  BTFSC PORTB, RB3               ;CHECK STATE OF RB3 (MANUAL)
+000C   2???           00044  GOTO MAN
+000D   1A06           00045  BTFSC PORTB, RB4               ;CHECK STATE OF RB3 (MANUAL)
+000E   2???           00046  GOTO RESETLBL
+000F   2???           00047  GOTO EXIT
+                      00048  
+                      00049  
+Warning[207]: Found label after column 1. (DY)
+0010                  00050  DY:
+0010   01??           00051     CLRF CHANGEVAR
+0011   01??           00052     CLRF CONTROL
+0012   1400           00053     BSF CONTROL, 0
+0013   1400           00054     BSF CHANGEVAR, 0
+0014   2???           00055     GOTO EXIT
+                      00056     
+0015                  00057 AN:
+0015   01??           00058     CLRF CHANGEVAR
+0016   01??           00059     CLRF CONTROL
+0017   1480           00060     BSF CONTROL, 1
+0018   1480           00061     BSF CHANGEVAR, 1
+0019   2???           00062     GOTO EXIT
+                      00063     
+001A                  00064 NG:
+001A   01??           00065     CLRF CHANGEVAR
+001B   01??           00066     CLRF CONTROL
+001C   1500           00067     BSF CONTROL, 2
+001D   1500           00068     BSF CHANGEVAR, 2
+001E   2???           00069     GOTO EXIT
+                      00070     
+001F                  00071 MAN:
+001F   01??           00072     CLRF CHANGEVAR
+0020   01??           00073     CLRF CONTROL
+0021   1580           00074     BSF CONTROL, 3
+0022   1580           00075     BSF CHANGEVAR, 3 
+0023   2???           00076     GOTO EXIT
+                      00077     
+                      00078  
+                      00079  
+Warning[207]: Found label after column 1. (RESETLBL)
+0024                  00080  RESETLBL:
+0024   01??           00081     CLRF PHASETIMER
+0025   01??           00082     CLRF TIMERTWOFIVE
+0026   01??           00083     CLRF TM
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0027   01??           00084     CLRF SECTIMER
+0028   0187           00085     CLRF PORTC
+0029   0188           00086     CLRF PORTD
+002A   2???           00087     GOTO EXIT
+                      00088  
+Warning[207]: Found label after column 1. (EXIT)
+002B                  00089  EXIT:
+002B   2???           00090  CALL DELAY
+002C   100B           00091  BCF INTCON, RBIF               ;CLEAR INTERRUPT FLAG ON PORT B
+002D   178B           00092  BSF INTCON, GIE                ;ENABLE FURTHER INTERRUPTS
+Warning[203]: Found opcode in column 1. (RETFIE)
+002E   0009           00093 RETFIE                          ;RETURN FROM INTERRUPT
+                      00094  
+                      00095  
+                      00096                         
+                      00097  
+                      00098 
+                      00099 
+                      00100 
+                      00101 MAIN_PROG CODE                  ; let linker place main program
+                      00102 
+                      00103      
+0000                  00104 SETUP
+0000   1303           00105  BCF STATUS, RP1                ;
+0001   1683           00106  BSF STATUS, RP0                ;BANK 1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0002   1416           00107  BSF IOCB, IOCB0                ;INTERRUPT ON CHANGE ENABLED RB0
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0003   1496           00108  BSF IOCB, IOCB1                ;INTERRUPT ON CHANGE ENABLED RB1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0004   1516           00109  BSF IOCB, IOCB2                ;INTERRUPT ON CHANGE ENABLED RB2
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0005   1596           00110  BSF IOCB, IOCB3                ;INTERRUPT ON CHANGE ENABLED RB3
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0006   1616           00111  BSF IOCB, IOCB4                ;INTERRUPT ON CHANGE ENABLED RB4
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0007   170F           00112  BSF OSCCON, IRCF2              ;
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0008   168F           00113  BSF OSCCON, IRCF1              ;
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0009   160F           00114  BSF OSCCON, IRCF0              ;OSC FREC 8MHz
+000A   1683           00115  BSF STATUS, RP0                ;
+000B   1703           00116  BSF STATUS, RP1                ;BANK 3
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000C   0188           00117  CLRF ANSEL                     ;DIGITAL OUTPUT
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000D   0189           00118  CLRF ANSELH                    ;DIGITAL OUTPUT
+000E   1303           00119  BCF STATUS, RP1                ;BANK 1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000F   0188           00120  CLRF TRISD                     ;PORTD OUTPUT
+                      00121                                 ;RD0 GREEN LED SL1
+                      00122                                 ;RD1 YELLOW LED SL1
+                      00123                                 ;RD2 RED LED SL1
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00124                                 ;RD3 GREEN LED SL2
+                      00125                                 ;RD4 YELLOW LED SL2
+                      00126                                 ;RD5 RED LED SL2
+                      00127                                 ;RD6 GREEN LED SL3
+                      00128                                 ;RD7 YELLOW LED SL3
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0010   0187           00129  CLRF TRISC                     ;PORTC OUTPUT
+                      00130                                 ;RC0 RED LED SL3
+                      00131                                 ;RC1 YELLOW SL4
+                      00132                                 
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0011   1406           00133  BSF TRISB, 0                   ;RB0 INPUT      (PB)        DAY 
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0012   1486           00134  BSF TRISB, 1                   ;RB1 INPUT      (PB)        AFTERNOON 
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0013   1506           00135  BSF TRISB, 2                   ;RB2 INPUT      (PB)        NIGHT 
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0014   1586           00136  BSF TRISB, 3                   ;RB3 INPUT      (PB)        MANUAL 
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0015   1606           00137  BSF TRISB, 4
+0016   2???           00138  CALL INITTMR0                  ;CALL SUBR TO INITIALIZE TMR0       
+0017   0188           00139  CLRF PORTD                     ;SET VALUE TO 0
+0018   0186           00140  CLRF PORTB                     ;SET VALUE TO 0
+0019   0187           00141  CLRF PORTC                     ;SET VALUE TO 0
+001A   1283           00142  BCF STATUS, RP0                ;
+001B   1303           00143  BCF STATUS, RP1                ;BANK 0
+001C   178B           00144  BSF INTCON, GIE                ;ENABLE GLOBAL INTERRUPT
+001D   158B           00145  BSF INTCON, RBIE               ;ENABLE INTERRUPTS ON PORTB (ON CHANGE)
+001E   140B           00146  BSF INTCON, RBIF               ;ENABLE INTERRUPT ON PORTB FLAG
+001F   01??           00147  CLRF CONTROL
+0020   01??           00148  CLRF PHASETIMER
+0021   01??           00149  CLRF CHANGEVAR
+0022   1580           00150  BSF CHANGEVAR, 3                       ;START MODE
+                      00151  
+0023   3001           00152  MOVLW .1
+0024   00??           00153  MOVWF PHASETIMER
+                      00154 
+                      00155  
+                      00156  
+                      00157  
+                      00158  
+0025                  00159 MAINLOOP:
+0025   01??           00160     CLRF TIMERTWOFIVE
+0026   01??           00161     CLRF CONTROL
+0027   01??           00162     CLRF PHASETIMER
+0028   01??           00163     CLRF SECTIMER
+0029   01??           00164     CLRF TM
+                      00165     
+                      00166     
+002A   08??           00167     MOVF CHANGEVAR, W
+002B   00??           00168     MOVWF CONTROL
+                      00169     
+002C   3001           00170     MOVLW .1
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+002D   00??           00171     MOVWF TIMERTWOFIVE
+                      00172     
+002E   2???           00173     GOTO CHECKT0IF
+                      00174     
+                      00175     
+                      00176     
+002F                  00177 CHECKT0IF:
+002F   1D0B           00178     BTFSS INTCON, T0IF          ;CHECK INTERRUPTION FLAG T0 STATUS
+0030   2???           00179     GOTO CHECKT0IF              ;RETURN TO CHECKT0IF
+0031   110B           00180     BCF INTCON, T0IF            ;CLEAR INTERRUPTION FLAG
+0032   303D           00181     MOVLW .61                   ;MOVE LITERAL 61 TO W
+0033   0081           00182     MOVWF TMR0                  ;MOVE W TO TMR0
+0034   0A??           00183     INCF COUNTER, F             ;INCREASE COUNTER
+0035   08??           00184     MOVF COUNTER, W             ;MOVE COUNTER VAR TO W
+0036   3C0A           00185     SUBLW .10                   ;SUBSTRACT 10 TO W (25 mSEC)
+0037   1D03           00186     BTFSS STATUS, Z             ;CHECH ZERO FLAG STATUS
+0038   2???           00187     GOTO CHECKT0IF
+0039   01??           00188     CLRF COUNTER                ;CLEAR COUNTER VAR
+Message[305]: Using default destination of 1 (file).
+003A   0A??           00189     INCF TM
+003B   08??           00190     MOVF TM, W
+003C   3C14           00191     SUBLW .20
+003D   1D03           00192     BTFSS STATUS, Z
+003E   2???           00193     GOTO SEC
+003F   01??           00194     CLRF TM
+Message[305]: Using default destination of 1 (file).
+0040   0A??           00195     INCF TIMERTWOFIVE
+Warning[207]: Found label after column 1. (SEC)
+0041                  00196     SEC:
+0041   0A??           00197     INCF SECTIMER, F
+0042   08??           00198     MOVF SECTIMER, W
+0043   3C08           00199     SUBLW .8
+0044   1D03           00200     BTFSS STATUS, Z
+0045   2???           00201     GOTO CHECKT0IF
+0046   01??           00202     CLRF SECTIMER
+0047   2???           00203     GOTO TIMECHECK
+                      00204     
+                      00205 
+                      00206     
+Warning[207]: Found label after column 1. (TIMECHECK)
+0048                  00207     TIMECHECK:
+Message[305]: Using default destination of 1 (file).
+0048   0A??           00208     INCF PHASETIMER
+                      00209     
+                      00210     
+Warning[207]: Found label after column 1. (TIMECHECK0)
+0049                  00211     TIMECHECK0:
+0049   08??           00212     MOVF PHASETIMER, W
+004A   3C01           00213     SUBLW .1        ;1SECS
+004B   1D03           00214     BTFSS STATUS, Z
+004C   2???           00215     GOTO TIMECHECK2
+004D   2???           00216     GOTO PHASE1
+                      00217     
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00218 
+Warning[207]: Found label after column 1. (TIMECHECK2)
+004E                  00219     TIMECHECK2:
+004E   08??           00220     MOVF PHASETIMER, W
+004F   3C11           00221     SUBLW .17               ;17SECS
+0050   1D03           00222     BTFSS STATUS, Z
+0051   2???           00223     GOTO TIMECHECK3
+0052   2???           00224     GOTO PHASE2
+                      00225     
+Warning[207]: Found label after column 1. (TIMECHECK3)
+0053                  00226     TIMECHECK3:
+0053   08??           00227     MOVF PHASETIMER, W
+0054   3C14           00228     SUBLW .20               ;20SECS
+0055   1D03           00229     BTFSS STATUS, Z
+0056   2???           00230     GOTO TIMECHECK4
+0057   2???           00231     GOTO PHASE3
+                      00232     
+Warning[207]: Found label after column 1. (TIMECHECK4)
+0058                  00233     TIMECHECK4:
+0058   08??           00234     MOVF PHASETIMER, W
+0059   3C1E           00235     SUBLW .30               ;30SECS
+005A   1D03           00236     BTFSS STATUS, Z
+005B   2???           00237     GOTO TIMECHECK5
+005C   2???           00238     GOTO PHASE4
+                      00239     
+Warning[207]: Found label after column 1. (TIMECHECK5)
+005D                  00240     TIMECHECK5:
+005D   08??           00241     MOVF PHASETIMER, W
+005E   3C21           00242     SUBLW .33               ;33SECS
+005F   1D03           00243     BTFSS STATUS, Z
+0060   2???           00244     GOTO TIMECHECK6
+0061   2???           00245     GOTO PHASE5
+                      00246     
+Warning[207]: Found label after column 1. (TIMECHECK6)
+0062                  00247     TIMECHECK6:
+0062   08??           00248     MOVF PHASETIMER, W
+0063   3C25           00249     SUBLW .37               ;37SECS
+0064   1D03           00250     BTFSS STATUS, Z
+0065   2???           00251     GOTO TIMECHECK7
+0066   2???           00252     GOTO PHASE6
+                      00253     
+Warning[207]: Found label after column 1. (TIMECHECK7)
+0067                  00254     TIMECHECK7:
+0067   08??           00255     MOVF PHASETIMER, W
+0068   3C28           00256     SUBLW .40               ;40SECS
+0069   1D03           00257     BTFSS STATUS, Z
+006A   2???           00258     GOTO TIMECHECK8
+006B   2???           00259     GOTO PHASE7
+                      00260     
+Warning[207]: Found label after column 1. (TIMECHECK8)
+006C                  00261     TIMECHECK8:
+006C   08??           00262     MOVF PHASETIMER, W
+006D   3C32           00263     SUBLW .50               ;50SECS
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+006E   1D03           00264     BTFSS STATUS, Z
+006F   2???           00265     GOTO TIMECHECK9
+0070   2???           00266     GOTO PHASE8
+                      00267     
+Warning[207]: Found label after column 1. (TIMECHECK9)
+0071                  00268     TIMECHECK9:
+0071   08??           00269     MOVF PHASETIMER, W
+0072   3C35           00270     SUBLW .53               ;53SECS
+0073   1D03           00271     BTFSS STATUS, Z
+0074   2???           00272     GOTO TIMECHECK10
+0075   2???           00273     GOTO PHASE9
+                      00274     
+Warning[207]: Found label after column 1. (TIMECHECK10)
+0076                  00275     TIMECHECK10:
+0076   08??           00276     MOVF PHASETIMER, W
+0077   3C39           00277     SUBLW .57               ;57SECS
+0078   1D03           00278     BTFSS STATUS, Z
+0079   2???           00279     GOTO TIMECHECK11
+007A   2???           00280     GOTO PHASE10
+                      00281     
+Warning[207]: Found label after column 1. (TIMECHECK11)
+007B                  00282     TIMECHECK11:
+007B   08??           00283     MOVF PHASETIMER, W
+007C   3C3C           00284     SUBLW .60
+007D   1D03           00285     BTFSS STATUS, Z
+007E   2???           00286     GOTO TIMECHECK21
+007F   2???           00287     GOTO PHASE11
+                      00288     
+Warning[207]: Found label after column 1. (TIMECHECK21)
+0080                  00289     TIMECHECK21:
+0080   08??           00290     MOVF TIMERTWOFIVE, W
+0081   3C01           00291     SUBLW .1                ;2.5SECS
+0082   1D03           00292     BTFSS STATUS, Z
+0083   2???           00293     GOTO TIMECHECK22
+0084   2???           00294     GOTO PHASEON
+                      00295     
+Warning[207]: Found label after column 1. (TIMECHECK22)
+0085                  00296     TIMECHECK22:
+0085   08??           00297     MOVF TIMERTWOFIVE, W
+0086   3C02           00298     SUBLW .2                ;2.5SECS
+0087   1D03           00299     BTFSS STATUS, Z
+0088   2???           00300     GOTO TIMECHECK23
+0089   2???           00301     GOTO PHASEOFF
+                      00302     
+Warning[207]: Found label after column 1. (TIMECHECK23)
+008A                  00303     TIMECHECK23:
+008A   08??           00304     MOVF TIMERTWOFIVE, W
+008B   3C03           00305     SUBLW .3                ;2.5SECS
+008C   1D03           00306     BTFSS STATUS, Z
+008D   2???           00307     GOTO TIMECHECK24
+008E   2???           00308     GOTO PHASEON
+                      00309     
+Warning[207]: Found label after column 1. (TIMECHECK24)
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+008F                  00310     TIMECHECK24:
+008F   08??           00311     MOVF TIMERTWOFIVE, W
+0090   3C04           00312     SUBLW .4                ;2.5SECS
+0091   1D03           00313     BTFSS STATUS, Z
+0092   2???           00314     GOTO TIMECHECK25
+0093   2???           00315     GOTO PHASEOFF
+                      00316     
+Warning[207]: Found label after column 1. (TIMECHECK25)
+0094                  00317     TIMECHECK25:
+0094   08??           00318     MOVF TIMERTWOFIVE, W
+0095   3C05           00319     SUBLW .5                ;2.5SECS
+0096   1D03           00320     BTFSS STATUS, Z
+0097   2???           00321     GOTO TIMECHECK26
+0098   2???           00322     GOTO PHASEON
+                      00323     
+Warning[207]: Found label after column 1. (TIMECHECK26)
+0099                  00324     TIMECHECK26:
+0099   08??           00325     MOVF TIMERTWOFIVE, W
+009A   3C06           00326     SUBLW .6                ;2.5SECS
+009B   1D03           00327     BTFSS STATUS, Z
+009C   2???           00328     GOTO TIMECHECK27
+009D   2???           00329     GOTO PHASEOFF
+                      00330     
+Warning[207]: Found label after column 1. (TIMECHECK27)
+009E                  00331     TIMECHECK27:
+009E   08??           00332     MOVF TIMERTWOFIVE, W
+009F   3C07           00333     SUBLW .7                ;2.5SECS
+00A0   1D03           00334     BTFSS STATUS, Z
+00A1   2???           00335     GOTO TIMECHECK28
+00A2   2???           00336     GOTO PHASEON
+                      00337     
+Warning[207]: Found label after column 1. (TIMECHECK28)
+00A3                  00338     TIMECHECK28:
+00A3   08??           00339     MOVF TIMERTWOFIVE, W
+00A4   3C08           00340     SUBLW .8                ;2.5SECS
+00A5   1D03           00341     BTFSS STATUS, Z
+00A6   2???           00342     GOTO TIMECHECK29
+00A7   2???           00343     GOTO PHASEOFF
+                      00344     
+Warning[207]: Found label after column 1. (TIMECHECK29)
+00A8                  00345     TIMECHECK29:
+00A8   08??           00346     MOVF TIMERTWOFIVE, W
+00A9   3C09           00347     SUBLW .9                ;2.5SECS
+00AA   1D03           00348     BTFSS STATUS, Z
+00AB   2???           00349     GOTO TIMECHECK30
+00AC   2???           00350     GOTO PHASEON
+                      00351     
+Warning[207]: Found label after column 1. (TIMECHECK30)
+00AD                  00352     TIMECHECK30:
+00AD   08??           00353     MOVF TIMERTWOFIVE, W
+00AE   3C0A           00354     SUBLW .10       ;2.5SECS
+00AF   1D03           00355     BTFSS STATUS, Z
+00B0   2???           00356     GOTO TIMECHECK31
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00B1   2???           00357     GOTO PHASEOFF
+                      00358     
+Warning[207]: Found label after column 1. (TIMECHECK31)
+00B2                  00359     TIMECHECK31:
+00B2   08??           00360     MOVF TIMERTWOFIVE, W
+00B3   3C0B           00361     SUBLW .11               ;2.5SECS
+00B4   1D03           00362     BTFSS STATUS, Z
+00B5   2???           00363     GOTO TIMECHECK32
+00B6   2???           00364     GOTO PHASEON
+                      00365     
+Warning[207]: Found label after column 1. (TIMECHECK32)
+00B7                  00366     TIMECHECK32:
+00B7   08??           00367     MOVF TIMERTWOFIVE, W
+00B8   3C0C           00368     SUBLW .12               ;2.5SECS
+00B9   1D03           00369     BTFSS STATUS, Z
+00BA   2???           00370     GOTO TIMECHECK33
+00BB   2???           00371     GOTO PHASEOFF
+                      00372     
+Warning[207]: Found label after column 1. (TIMECHECK33)
+00BC                  00373     TIMECHECK33:
+00BC   08??           00374     MOVF TIMERTWOFIVE, W
+00BD   3C0D           00375     SUBLW .13               ;2.5SECS
+00BE   1D03           00376     BTFSS STATUS, Z
+00BF   2???           00377     GOTO TIMECHECK34
+00C0   2???           00378     GOTO PHASEON
+                      00379     
+Warning[207]: Found label after column 1. (TIMECHECK34)
+00C1                  00380     TIMECHECK34:
+00C1   08??           00381     MOVF TIMERTWOFIVE, W
+00C2   3C0E           00382     SUBLW .14               ;2.5SECS
+00C3   1D03           00383     BTFSS STATUS, Z
+00C4   2???           00384     GOTO TIMECHECK35
+00C5   2???           00385     GOTO PHASEOFF
+                      00386     
+Warning[207]: Found label after column 1. (TIMECHECK35)
+00C6                  00387     TIMECHECK35:
+00C6   08??           00388     MOVF TIMERTWOFIVE, W
+00C7   3C0F           00389     SUBLW .15               ;2.5SECS
+00C8   1D03           00390     BTFSS STATUS, Z
+00C9   2???           00391     GOTO TIMECHECK36
+00CA   2???           00392     GOTO PHASEON
+                      00393     
+Warning[207]: Found label after column 1. (TIMECHECK36)
+00CB                  00394     TIMECHECK36:
+00CB   08??           00395     MOVF TIMERTWOFIVE, W
+00CC   3C10           00396     SUBLW .16               ;2.5SECS
+00CD   1D03           00397     BTFSS STATUS, Z
+00CE   2???           00398     GOTO TIMECHECK37
+00CF   2???           00399     GOTO PHASEOFF
+                      00400     
+Warning[207]: Found label after column 1. (TIMECHECK37)
+00D0                  00401     TIMECHECK37:
+00D0   08??           00402     MOVF TIMERTWOFIVE, W
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00D1   3C11           00403     SUBLW .17               ;2.5SECS
+00D2   1D03           00404     BTFSS STATUS, Z
+00D3   2???           00405     GOTO TIMECHECK38
+00D4   2???           00406     GOTO PHASEON
+                      00407     
+Warning[207]: Found label after column 1. (TIMECHECK38)
+00D5                  00408     TIMECHECK38:
+00D5   08??           00409     MOVF TIMERTWOFIVE, W
+00D6   3C12           00410     SUBLW .18               ;2.5SECS
+00D7   1D03           00411     BTFSS STATUS, Z
+00D8   2???           00412     GOTO TIMECHECK39
+00D9   2???           00413     GOTO PHASEOFF
+                      00414     
+Warning[207]: Found label after column 1. (TIMECHECK39)
+00DA                  00415     TIMECHECK39:
+00DA   08??           00416     MOVF TIMERTWOFIVE, W
+00DB   3C13           00417     SUBLW .19               ;2.5SECS
+00DC   1D03           00418     BTFSS STATUS, Z
+00DD   2???           00419     GOTO TIMECHECK40
+00DE   2???           00420     GOTO PHASEON
+                      00421     
+Warning[207]: Found label after column 1. (TIMECHECK40)
+00DF                  00422     TIMECHECK40:
+00DF   08??           00423     MOVF TIMERTWOFIVE, W
+00E0   3C14           00424     SUBLW .20               ;2.5SECS
+00E1   1D03           00425     BTFSS STATUS, Z
+00E2   2???           00426     GOTO TIMECHECKY1
+00E3   2???           00427     GOTO PHASEOFF
+                      00428    ;
+                      00429    ;
+                      00430    ;
+                      00431    ;
+                      00432    ;
+Warning[207]: Found label after column 1. (TIMECHECKY1)
+00E4                  00433     TIMECHECKY1:
+00E4   08??           00434     MOVF PHASETIMER, W
+00E5   3C1F           00435     SUBLW .31               ;
+00E6   1D03           00436     BTFSS STATUS, Z
+00E7   2???           00437     GOTO TIMECHECKY2
+00E8   2???           00438     GOTO PHASE31
+                      00439     
+Warning[207]: Found label after column 1. (TIMECHECKY2)
+00E9                  00440     TIMECHECKY2:
+00E9   08??           00441     MOVF PHASETIMER, W
+00EA   3C20           00442     SUBLW .32               ;
+00EB   1D03           00443     BTFSS STATUS, Z
+00EC   2???           00444     GOTO TIMECHECKY3
+00ED   2???           00445     GOTO PHASE32
+                      00446     
+Warning[207]: Found label after column 1. (TIMECHECKY3)
+00EE                  00447     TIMECHECKY3:
+00EE   08??           00448     MOVF PHASETIMER, W
+00EF   3C33           00449     SUBLW .51               ;
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00F0   1D03           00450     BTFSS STATUS, Z
+00F1   2???           00451     GOTO TIMECHECKY4
+00F2   2???           00452     GOTO PHASE51
+                      00453     
+Warning[207]: Found label after column 1. (TIMECHECKY4)
+00F3                  00454     TIMECHECKY4:
+00F3   08??           00455     MOVF PHASETIMER, W
+00F4   3C34           00456     SUBLW .52               ;
+00F5   1D03           00457     BTFSS STATUS, Z
+00F6   2???           00458     GOTO TIMECHECKY11
+00F7   2???           00459     GOTO PHASE52
+                      00460     
+                      00461         
+Warning[207]: Found label after column 1. (TIMECHECKY11)
+00F8                  00462     TIMECHECKY11:
+00F8   08??           00463     MOVF PHASETIMER, W
+00F9   3C3A           00464     SUBLW .58               ;
+00FA   1D03           00465     BTFSS STATUS, Z
+00FB   2???           00466     GOTO TIMECHECKY12
+00FC   2???           00467     GOTO PHASE58
+                      00468     
+Warning[207]: Found label after column 1. (TIMECHECKY12)
+00FD                  00469     TIMECHECKY12:
+00FD   08??           00470     MOVF PHASETIMER, W
+00FE   3C3B           00471     SUBLW .59               ;
+00FF   1D03           00472     BTFSS STATUS, Z
+0100   2???           00473     GOTO TIMECHECKY13
+0101   2???           00474     GOTO PHASE59
+                      00475     
+                      00476     
+Warning[207]: Found label after column 1. (TIMECHECKY13)
+0102                  00477     TIMECHECKY13:
+0102   08??           00478     MOVF PHASETIMER, W
+0103   3C26           00479     SUBLW .38               ;
+0104   1D03           00480     BTFSS STATUS, Z
+0105   2???           00481     GOTO TIMECHECKY14
+0106   2???           00482     GOTO PHASE38
+                      00483     
+Warning[207]: Found label after column 1. (TIMECHECKY14)
+0107                  00484     TIMECHECKY14:
+0107   08??           00485     MOVF PHASETIMER, W
+0108   3C27           00486     SUBLW .39               ;
+0109   1D03           00487     BTFSS STATUS, Z
+010A   2???           00488     GOTO TIMECHECKY15
+010B   2???           00489     GOTO PHASE39
+                      00490     
+Warning[207]: Found label after column 1. (TIMECHECKY15)
+010C                  00491     TIMECHECKY15:
+010C   08??           00492     MOVF PHASETIMER, W
+010D   3C12           00493     SUBLW .18               ;
+010E   1D03           00494     BTFSS STATUS, Z
+010F   2???           00495     GOTO TIMECHECKY16
+0110   2???           00496     GOTO PHASE18
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00497     
+Warning[207]: Found label after column 1. (TIMECHECKY16)
+0111                  00498     TIMECHECKY16:
+0111   08??           00499     MOVF PHASETIMER, W
+0112   3C13           00500     SUBLW .19               ;
+0113   1D03           00501     BTFSS STATUS, Z
+0114   2???           00502     GOTO CHECKT0IF
+0115   2???           00503     GOTO PHASE19
+                      00504     
+                      00505     
+                      00506    
+                      00507     
+                      00508     
+                      00509     
+                      00510     
+                      00511     
+                      00512     
+Warning[207]: Found label after column 1. (PHASE1)
+0116                  00513     PHASE1:
+                      00514     ;
+0116   0187           00515     CLRF PORTC
+0117   0188           00516     CLRF PORTD
+                      00517     ;
+Warning[207]: Found label after column 1. (DMODE1)
+0118                  00518     DMODE1:
+0118   1C00           00519     BTFSS CONTROL, 0
+0119   2???           00520     GOTO AMODE1
+011A   1408           00521     BSF PORTD, 0
+011B   1688           00522     BSF PORTD, 5
+011C   1407           00523     BSF PORTC, 0
+011D   2???           00524     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE1)
+011E                  00525     AMODE1:
+011E   1C80           00526     BTFSS CONTROL, 1
+011F   2???           00527     GOTO NMODE1
+0120   1408           00528     BSF PORTD, 0
+0121   1688           00529     BSF PORTD, 5
+0122   1407           00530     BSF PORTC, 0
+0123   2???           00531     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE1)
+0124                  00532     NMODE1:
+0124   1D00           00533     BTFSS CONTROL, 2
+0125   2???           00534     GOTO MMODE1
+0126   1508           00535     BSF PORTD, 2
+0127   1588           00536     BSF PORTD, 3
+0128   1407           00537     BSF PORTC, 0
+0129   2???           00538     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (MMODE1)
+012A                  00539     MMODE1:
+012A   1D80           00540     BTFSS CONTROL, 3
+012B   2???           00541     GOTO CHECKT0IF
+012C   1488           00542     BSF PORTD, 1
+012D   1608           00543     BSF PORTD, 4
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+012E   1788           00544     BSF PORTD, 7
+012F   1487           00545     BSF PORTC, 1
+0130   2???           00546     GOTO CHECKT0IF
+                      00547      
+                      00548     
+Warning[207]: Found label after column 1. (PHASE2)
+0131                  00549     PHASE2:
+                      00550     ;
+0131   0187           00551     CLRF PORTC
+0132   0188           00552     CLRF PORTD
+                      00553     ;
+Warning[207]: Found label after column 1. (DMODE2)
+0133                  00554     DMODE2:
+0133   1C00           00555     BTFSS CONTROL, 0
+0134   2???           00556     GOTO AMODE2
+0135   1408           00557     BSF PORTD, 0
+0136   1688           00558     BSF PORTD, 5
+0137   1407           00559     BSF PORTC, 0
+0138   2???           00560     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE2)
+0139                  00561     AMODE2:
+0139   1C80           00562     BTFSS CONTROL, 1
+013A   2???           00563     GOTO NMODE2
+013B   1488           00564     BSF PORTD, 1
+013C   1688           00565     BSF PORTD, 5
+013D   1407           00566     BSF PORTC, 0
+013E   2???           00567     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE2)
+013F                  00568     NMODE2:
+013F   1D00           00569     BTFSS CONTROL, 2
+0140   2???           00570     GOTO CHECKT0IF
+0141   1508           00571     BSF PORTD, 2
+0142   1588           00572     BSF PORTD, 3
+0143   1407           00573     BSF PORTC, 0
+0144   2???           00574     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE3)
+0145                  00575     PHASE3:
+                      00576     ;
+0145   0187           00577     CLRF PORTC
+0146   0188           00578     CLRF PORTD
+                      00579     ;
+Warning[207]: Found label after column 1. (DMODE3)
+0147                  00580     DMODE3:
+0147   1C00           00581     BTFSS CONTROL, 0
+0148   2???           00582     GOTO AMODE3
+0149   1408           00583     BSF PORTD, 0
+014A   1688           00584     BSF PORTD, 5
+014B   1407           00585     BSF PORTC, 0
+014C   2???           00586     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE3)
+014D                  00587     AMODE3:
+014D   1C80           00588     BTFSS CONTROL, 1
+014E   2???           00589     GOTO NMODE3
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 14
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+014F   1508           00590     BSF PORTD, 2
+0150   1588           00591     BSF PORTD, 3
+0151   1407           00592     BSF PORTC, 0
+0152   2???           00593     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE3)
+0153                  00594     NMODE3:
+0153   1D00           00595     BTFSS CONTROL, 2
+0154   2???           00596     GOTO CHECKT0IF
+0155   1508           00597     BSF PORTD, 2
+0156   1588           00598     BSF PORTD, 3
+0157   1407           00599     BSF PORTC, 0
+0158   2???           00600     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE4)
+0159                  00601     PHASE4:
+                      00602     ;
+0159   0187           00603     CLRF PORTC
+015A   0188           00604     CLRF PORTD
+                      00605     ;
+Warning[207]: Found label after column 1. (DMODE4)
+015B                  00606     DMODE4:
+015B   1C00           00607     BTFSS CONTROL, 0
+015C   2???           00608     GOTO AMODE4
+015D   1488           00609     BSF PORTD, 1
+015E   1688           00610     BSF PORTD, 5
+015F   1407           00611     BSF PORTC, 0
+0160   2???           00612     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE4)
+0161                  00613     AMODE4:
+0161   1C80           00614     BTFSS CONTROL, 1
+0162   2???           00615     GOTO NMODE4
+0163   1508           00616     BSF PORTD, 2
+0164   1588           00617     BSF PORTD, 3
+0165   1407           00618     BSF PORTC, 0
+0166   2???           00619     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE4)
+0167                  00620     NMODE4:
+0167   1D00           00621     BTFSS CONTROL, 2
+0168   2???           00622     GOTO CHECKT0IF
+0169   1508           00623     BSF PORTD, 2
+016A   1608           00624     BSF PORTD, 4
+016B   1407           00625     BSF PORTC, 0
+016C   2???           00626     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE5)
+016D                  00627     PHASE5:
+                      00628     ;
+016D   0187           00629     CLRF PORTC
+016E   0188           00630     CLRF PORTD
+Warning[207]: Found label after column 1. (DMODE5)
+016F                  00631     DMODE5:
+016F   1C00           00632     BTFSS CONTROL, 0
+0170   2???           00633     GOTO AMODE5
+0171   1508           00634     BSF PORTD, 2
+0172   1588           00635     BSF PORTD, 3
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 15
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0173   1407           00636     BSF PORTC, 0
+0174   2???           00637     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE5)
+0175                  00638     AMODE5:
+0175   1C80           00639     BTFSS CONTROL, 1
+0176   2???           00640     GOTO NMODE5
+0177   1508           00641     BSF PORTD, 2
+0178   1588           00642     BSF PORTD, 3
+0179   1407           00643     BSF PORTC, 0
+017A   2???           00644     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE5)
+017B                  00645     NMODE5:
+017B   1D00           00646     BTFSS CONTROL, 2
+017C   2???           00647     GOTO CHECKT0IF
+017D   1408           00648     BSF PORTD, 0
+017E   1688           00649     BSF PORTD, 5
+017F   1407           00650     BSF PORTC, 0
+0180   2???           00651     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE6)
+0181                  00652     PHASE6:
+                      00653     ;
+0181   0187           00654     CLRF PORTC
+0182   0188           00655     CLRF PORTD
+Warning[207]: Found label after column 1. (DMODE6)
+0183                  00656     DMODE6:
+0183   1C00           00657     BTFSS CONTROL, 0
+0184   2???           00658     GOTO AMODE6
+0185   1508           00659     BSF PORTD, 2
+0186   1588           00660     BSF PORTD, 3
+0187   1407           00661     BSF PORTC, 0
+0188   2???           00662     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE6)
+0189                  00663     AMODE6:
+0189   1C80           00664     BTFSS CONTROL, 1
+018A   2???           00665     GOTO NMODE6
+018B   1508           00666     BSF PORTD, 2
+018C   1608           00667     BSF PORTD, 4
+018D   1407           00668     BSF PORTC, 0
+018E   2???           00669     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE6)
+018F                  00670     NMODE6:
+018F   1D00           00671     BTFSS CONTROL, 2
+0190   2???           00672     GOTO CHECKT0IF
+0191   1408           00673     BSF PORTD, 0
+0192   1688           00674     BSF PORTD, 5
+0193   1407           00675     BSF PORTC, 0
+0194   2???           00676     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE7)
+0195                  00677     PHASE7:
+                      00678     ;
+0195   0187           00679     CLRF PORTC
+0196   0188           00680     CLRF PORTD
+Warning[207]: Found label after column 1. (DMODE7)
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0197                  00681     DMODE7:
+0197   1C00           00682     BTFSS CONTROL, 0
+0198   2???           00683     GOTO AMODE7
+0199   1508           00684     BSF PORTD, 2
+019A   1588           00685     BSF PORTD, 3
+019B   1407           00686     BSF PORTC, 0
+019C   2???           00687     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE7)
+019D                  00688     AMODE7:
+019D   1C80           00689     BTFSS CONTROL, 1
+019E   2???           00690     GOTO NMODE7
+019F   1508           00691     BSF PORTD, 2
+01A0   1688           00692     BSF PORTD, 5
+01A1   1708           00693     BSF PORTD, 6
+01A2   2???           00694     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE7)
+01A3                  00695     NMODE7:
+01A3   1D00           00696     BTFSS CONTROL, 2
+01A4   2???           00697     GOTO CHECKT0IF
+01A5   1408           00698     BSF PORTD, 0
+01A6   1688           00699     BSF PORTD, 5
+01A7   1407           00700     BSF PORTC, 0
+01A8   2???           00701     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE8)
+01A9                  00702     PHASE8:
+                      00703     ;
+01A9   0187           00704     CLRF PORTC
+01AA   0188           00705     CLRF PORTD
+Warning[207]: Found label after column 1. (DMODE8)
+01AB                  00706     DMODE8:
+01AB   1C00           00707     BTFSS CONTROL, 0
+01AC   2???           00708     GOTO AMODE8
+01AD   1508           00709     BSF PORTD, 2
+01AE   1608           00710     BSF PORTD, 4
+01AF   1407           00711     BSF PORTC, 0
+01B0   2???           00712     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE8)
+01B1                  00713     AMODE8:
+01B1   1C80           00714     BTFSS CONTROL, 1
+01B2   2???           00715     GOTO NMODE8
+01B3   1508           00716     BSF PORTD, 2
+01B4   1688           00717     BSF PORTD, 5
+01B5   1708           00718     BSF PORTD, 6
+01B6   2???           00719     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE8)
+01B7                  00720     NMODE8:
+01B7   1D00           00721     BTFSS CONTROL, 2
+01B8   2???           00722     GOTO CHECKT0IF
+01B9   1488           00723     BSF PORTD, 1
+01BA   1688           00724     BSF PORTD, 5
+01BB   1407           00725     BSF PORTC, 0
+01BC   2???           00726     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE9)
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 17
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01BD                  00727     PHASE9:
+                      00728     ;
+01BD   0187           00729     CLRF PORTC
+01BE   0188           00730     CLRF PORTD
+Warning[207]: Found label after column 1. (DMODE9)
+01BF                  00731     DMODE9:
+01BF   1C00           00732     BTFSS CONTROL, 0
+01C0   2???           00733     GOTO AMODE9
+01C1   1508           00734     BSF PORTD, 2
+01C2   1688           00735     BSF PORTD, 5
+01C3   1708           00736     BSF PORTD, 6
+01C4   2???           00737     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE9)
+01C5                  00738     AMODE9:
+01C5   1C80           00739     BTFSS CONTROL, 1
+01C6   2???           00740     GOTO NMODE9
+01C7   1508           00741     BSF PORTD, 2
+01C8   1688           00742     BSF PORTD, 5
+01C9   1708           00743     BSF PORTD, 6
+01CA   2???           00744     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE9)
+01CB                  00745     NMODE9:
+01CB   1D00           00746     BTFSS CONTROL, 2
+01CC   2???           00747     GOTO CHECKT0IF
+01CD   1508           00748     BSF PORTD, 2
+01CE   1688           00749     BSF PORTD, 5
+01CF   1708           00750     BSF PORTD, 6
+01D0   2???           00751     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE10)
+01D1                  00752     PHASE10:
+                      00753     ;
+01D1   0187           00754     CLRF PORTC
+01D2   0188           00755     CLRF PORTD
+Warning[207]: Found label after column 1. (DMODE10)
+01D3                  00756     DMODE10:
+01D3   1C00           00757     BTFSS CONTROL, 0
+01D4   2???           00758     GOTO AMODE10
+01D5   1508           00759     BSF PORTD, 2
+01D6   1688           00760     BSF PORTD, 5
+01D7   1788           00761     BSF PORTD, 7
+01D8   2???           00762     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE10)
+01D9                  00763     AMODE10:
+01D9   1C80           00764     BTFSS CONTROL, 1
+01DA   2???           00765     GOTO NMODE10
+01DB   1508           00766     BSF PORTD, 2
+01DC   1688           00767     BSF PORTD, 5
+01DD   1788           00768     BSF PORTD, 7
+01DE   2???           00769     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE10)
+01DF                  00770     NMODE10:
+01DF   1D00           00771     BTFSS CONTROL, 2
+01E0   2???           00772     GOTO CHECKT0IF
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 18
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01E1   1508           00773     BSF PORTD, 2
+01E2   1688           00774     BSF PORTD, 5
+01E3   1788           00775     BSF PORTD, 7
+01E4   2???           00776     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASE11)
+01E5                  00777     PHASE11:
+                      00778     ;
+01E5   0187           00779     CLRF PORTC
+01E6   0188           00780     CLRF PORTD
+01E7   01??           00781     CLRF PHASETIMER
+01E8   2???           00782     GOTO MAINLOOP
+                      00783     
+Warning[207]: Found label after column 1. (PHASEON)
+01E9                  00784     PHASEON:
+01E9   1487           00785     BSF PORTC, 1
+                      00786 
+01EA   1D80           00787     BTFSS CONTROL, 3
+01EB   2???           00788     GOTO CHECKT0IF
+01EC   0187           00789     CLRF PORTC
+01ED   0188           00790     CLRF PORTD
+01EE   1488           00791     BSF PORTD, 1
+01EF   1608           00792     BSF PORTD, 4
+01F0   1788           00793     BSF PORTD, 7
+01F1   1487           00794     BSF PORTC, 1
+01F2   2???           00795     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (PHASEOFF)
+01F3                  00796     PHASEOFF:
+01F3   1087           00797     BCF PORTC, 1
+01F4   1D80           00798     BTFSS CONTROL, 3
+01F5   2???           00799     GOTO CHECKT0IF
+01F6   0187           00800     CLRF PORTC
+01F7   0188           00801     CLRF PORTD
+01F8   2???           00802     GOTO CHECKT0IF
+                      00803 
+                      00804     
+                      00805     
+Warning[207]: Found label after column 1. (PHASE18)
+01F9                  00806     PHASE18:
+                      00807     ;
+01F9   1C80           00808     BTFSS CONTROL, 1
+01FA   2???           00809     GOTO CHECKT0IF
+01FB   1088           00810     BCF PORTD, 1
+01FC   2???           00811     GOTO CHECKT0IF
+                      00812     
+                      00813     
+Warning[207]: Found label after column 1. (PHASE19)
+01FD                  00814     PHASE19:
+                      00815     ;
+01FD   1C80           00816     BTFSS CONTROL, 1
+01FE   2???           00817     GOTO CHECKT0IF
+01FF   1488           00818     BSF PORTD, 1
+0200   2???           00819     GOTO CHECKT0IF
+                      00820     
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 19
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00821     
+                      00822     
+Warning[207]: Found label after column 1. (PHASE31)
+0201                  00823     PHASE31:
+                      00824     ;
+0201   1C00           00825     BTFSS CONTROL, 0
+0202   2???           00826     GOTO NMODE31
+0203   1088           00827     BCF PORTD, 1
+0204   2???           00828     GOTO CHECKT0IF
+                      00829     
+Warning[207]: Found label after column 1. (NMODE31)
+0205                  00830     NMODE31:
+0205   1D00           00831     BTFSS CONTROL, 2
+0206   2???           00832     GOTO CHECKT0IF
+0207   1208           00833     BCF PORTD, 4
+0208   2???           00834     GOTO CHECKT0IF
+                      00835     
+Warning[207]: Found label after column 1. (PHASE32)
+0209                  00836     PHASE32:
+                      00837     ;
+0209   1C00           00838     BTFSS CONTROL, 0
+020A   2???           00839     GOTO NMODE32
+020B   1488           00840     BSF PORTD, 1
+020C   2???           00841     GOTO CHECKT0IF
+                      00842     
+Warning[207]: Found label after column 1. (NMODE32)
+020D                  00843     NMODE32:
+020D   1D00           00844     BTFSS CONTROL, 2
+020E   2???           00845     GOTO CHECKT0IF
+020F   1608           00846     BSF PORTD, 4
+0210   2???           00847     GOTO CHECKT0IF
+                      00848     
+                      00849     
+Warning[207]: Found label after column 1. (PHASE38)
+0211                  00850     PHASE38:
+                      00851     ;
+0211   1C80           00852     BTFSS CONTROL, 1
+0212   2???           00853     GOTO CHECKT0IF
+0213   1208           00854     BCF PORTD, 4
+0214   2???           00855     GOTO CHECKT0IF
+                      00856     
+                      00857     
+Warning[207]: Found label after column 1. (PHASE39)
+0215                  00858     PHASE39:
+                      00859     ;
+0215   1C80           00860     BTFSS CONTROL, 1
+0216   2???           00861     GOTO CHECKT0IF
+0217   1608           00862     BSF PORTD, 4
+0218   2???           00863     GOTO CHECKT0IF
+                      00864     
+                      00865     
+                      00866     
+Warning[207]: Found label after column 1. (PHASE51)
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 20
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0219                  00867     PHASE51:
+                      00868     ;
+0219   1C00           00869     BTFSS CONTROL, 0
+021A   2???           00870     GOTO NMODE51
+021B   1208           00871     BCF PORTD, 4
+021C   2???           00872     GOTO CHECKT0IF
+                      00873     
+Warning[207]: Found label after column 1. (NMODE51)
+021D                  00874     NMODE51:
+021D   1D00           00875     BTFSS CONTROL, 2
+021E   2???           00876     GOTO CHECKT0IF
+021F   1088           00877     BCF PORTD, 1
+0220   2???           00878     GOTO CHECKT0IF
+                      00879     
+Warning[207]: Found label after column 1. (PHASE52)
+0221                  00880     PHASE52:
+                      00881     ;
+0221   1C00           00882     BTFSS CONTROL, 0
+0222   2???           00883     GOTO NMODE52
+0223   1608           00884     BSF PORTD, 4
+0224   2???           00885     GOTO CHECKT0IF
+                      00886     
+Warning[207]: Found label after column 1. (NMODE52)
+0225                  00887     NMODE52:
+0225   1D00           00888     BTFSS CONTROL, 2
+0226   2???           00889     GOTO CHECKT0IF
+0227   1488           00890     BSF PORTD, 1
+0228   2???           00891     GOTO CHECKT0IF
+                      00892     
+                      00893     
+Warning[207]: Found label after column 1. (PHASE58)
+0229                  00894     PHASE58:
+                      00895     ;
+0229   1C00           00896     BTFSS CONTROL, 0
+022A   2???           00897     GOTO AMODE58
+022B   1388           00898     BCF PORTD, 7
+022C   2???           00899     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE58)
+022D                  00900     AMODE58:
+022D   1C80           00901     BTFSS CONTROL, 1
+022E   2???           00902     GOTO NMODE58
+022F   1388           00903     BCF PORTD, 7
+0230   2???           00904     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE58)
+0231                  00905     NMODE58:
+0231   1D00           00906     BTFSS CONTROL, 2
+0232   2???           00907     GOTO CHECKT0IF
+0233   1388           00908     BCF PORTD, 7
+0234   2???           00909     GOTO CHECKT0IF
+                      00910     
+Warning[207]: Found label after column 1. (PHASE59)
+0235                  00911     PHASE59:
+                      00912     ;
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 21
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0235   1C00           00913     BTFSS CONTROL, 0
+0236   2???           00914     GOTO AMODE59
+0237   1788           00915     BSF PORTD, 7
+0238   2???           00916     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (AMODE59)
+0239                  00917     AMODE59:
+0239   1C80           00918     BTFSS CONTROL, 1
+023A   2???           00919     GOTO NMODE59
+023B   1788           00920     BSF PORTD, 7
+023C   2???           00921     GOTO CHECKT0IF
+Warning[207]: Found label after column 1. (NMODE59)
+023D                  00922     NMODE59:
+023D   1D00           00923     BTFSS CONTROL, 2
+023E   2???           00924     GOTO CHECKT0IF
+023F   1788           00925     BSF PORTD, 7
+0240   2???           00926     GOTO CHECKT0IF
+                      00927     
+                      00928     
+                      00929     
+                      00930     
+                      00931     
+                      00932     
+                      00933     
+                      00934     
+                      00935     
+                      00936 
+                      00937 ;SUBR
+0241                  00938 INITTMR0
+0241   1683           00939     BSF STATUS, RP0             ;
+0242   1303           00940     BCF STATUS, RP1             ;BANK 1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0243   1281           00941     BCF OPTION_REG, T0CS        ;TEMP ON
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0244   1181           00942     BCF OPTION_REG, PSA         ;
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0245   1501           00943     BSF OPTION_REG, PS2         ;
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0246   1481           00944     BSF OPTION_REG, PS1         ;
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0247   1001           00945     BCF OPTION_REG, PS0         ; PRESCALER 1:128
+0248   1283           00946     BCF STATUS, RP0             ;
+0249   1303           00947     BCF STATUS, RP1             ;BANK 0
+024A   303D           00948     MOVLW .61                   ;
+024B   0081           00949     MOVWF TMR0                  ;MOVE W TO TMR0
+Warning[203]: Found opcode in column 1. (RETURN)
+024C   0008           00950 RETURN
+                      00951 
+024D                  00952 DELAY
+024D   3096           00953     MOVLW .150
+024E   00??           00954     MOVWF D2
+024F                  00955 RES1:
+024F   3064           00956     MOVLW .100
+0250   00??           00957     MOVWF D1
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 22
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0251                  00958 RES2:    
+0251   0B??           00959     DECFSZ D1, F
+0252   2???           00960     GOTO RES2
+0253   0B??           00961     DECFSZ D2, F
+0254   2???           00962     GOTO RES1
+Warning[203]: Found opcode in column 1. (RETURN)
+0255   0008           00963 RETURN
+                      00964     
+Warning[205]: Found directive in column 1. (END)
+2895 3FFF             00965 END
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 23
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ABDEN                             00000000
+ABDOVF                            00000007
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ADCON0                            0000001F
+ADCON1                            0000009F
+ADCS0                             00000006
+ADCS1                             00000007
+ADDEN                             00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+AMODE1                            0000011E
+AMODE10                           000001D9
+AMODE2                            00000139
+AMODE3                            0000014D
+AMODE4                            00000161
+AMODE5                            00000175
+AMODE58                           0000022D
+AMODE59                           00000239
+AMODE6                            00000189
+AMODE7                            0000019D
+AMODE8                            000001B1
+AMODE9                            000001C5
+AN                                00000015
+ANS0                              00000000
+ANS1                              00000001
+ANS10                             00000002
+ANS11                             00000003
+ANS12                             00000004
+ANS13                             00000005
+ANS2                              00000002
+ANS3                              00000003
+ANS4                              00000004
+ANS5                              00000005
+ANS6                              00000006
+ANS7                              00000007
+ANS8                              00000000
+ANS9                              00000001
+ANSEL                             00000188
+ANSELH                            00000189
+BAUDCTL                           00000187
+BCLIE                             00000003
+BCLIF                             00000003
+BF                                00000000
+BRG0                              00000000
+BRG1                              00000001
+BRG10                             00000002
+BRG11                             00000003
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 24
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BRG12                             00000004
+BRG13                             00000005
+BRG14                             00000006
+BRG15                             00000007
+BRG16                             00000003
+BRG2                              00000002
+BRG3                              00000003
+BRG4                              00000004
+BRG5                              00000005
+BRG6                              00000006
+BRG7                              00000007
+BRG8                              00000000
+BRG9                              00000001
+BRGH                              00000002
+C                                 00000000
+C1CH0                             00000000
+C1CH1                             00000001
+C1IE                              00000005
+C1IF                              00000005
+C1OE                              00000005
+C1ON                              00000007
+C1OUT                             00000006
+C1POL                             00000004
+C1R                               00000002
+C1RSEL                            00000005
+C1SEN                             00000005
+C2CH0                             00000000
+C2CH1                             00000001
+C2IE                              00000006
+C2IF                              00000006
+C2OE                              00000005
+C2ON                              00000007
+C2OUT                             00000006
+C2POL                             00000004
+C2R                               00000002
+C2REN                             00000004
+C2RSEL                            00000004
+C2SYNC                            00000000
+CCP1CON                           00000017
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           0000001D
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 25
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1                             00000015
+CCPR1H                            00000016
+CCPR1L                            00000015
+CCPR2                             0000001B
+CCPR2H                            0000001C
+CCPR2L                            0000001B
+CHANGEVAR                         00000005
+CHECKT0IF                         0000002F
+CHS0                              00000002
+CHS1                              00000003
+CHS2                              00000004
+CHS3                              00000005
+CKE                               00000006
+CKP                               00000004
+CM1CON0                           00000107
+CM2CON0                           00000108
+CM2CON1                           00000109
+CONTROL                           00000003
+COUNTER                           00000000
+CREN                              00000004
+CSRC                              00000007
+D                                 00000005
+D1                                00000009
+D2                                00000008
+DATA_ADDRESS                      00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DELAY                             0000024D
+DMODE1                            00000118
+DMODE10                           000001D3
+DMODE2                            00000133
+DMODE3                            00000147
+DMODE4                            0000015B
+DMODE5                            0000016F
+DMODE6                            00000183
+DMODE7                            00000197
+DMODE8                            000001AB
+DMODE9                            000001BF
+DY                                00000010
+D_A                               00000005
+D_NOT_A                           00000005
+ECCPAS                            0000009C
+ECCPAS0                           00000004
+ECCPAS1                           00000005
+ECCPAS2                           00000006
+ECCPASE                           00000007
+EEADR                             0000010D
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 26
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+EEADRH                            0000010F
+EECON1                            0000018C
+EECON2                            0000018D
+EEDAT                             0000010C
+EEDATA                            0000010C
+EEDATH                            0000010E
+EEIE                              00000004
+EEIF                              00000004
+EEPGD                             00000007
+EXIT                              0000002B
+F                                 00000001
+FERR                              00000002
+FSR                               00000004
+FVREN                             00000000
+GCEN                              00000007
+GIE                               00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+HTS                               00000002
+I2C_DATA                          00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+INDF                              00000000
+INITTMR0                          00000241
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+IOCB                              00000096
+IOCB0                             00000000
+IOCB1                             00000001
+IOCB2                             00000002
+IOCB3                             00000003
+IOCB4                             00000004
+IOCB5                             00000005
+IOCB6                             00000006
+IOCB7                             00000007
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRP                               00000007
+LTS                               00000001
+MAINLOOP                          00000025
+MAN                               0000001F
+MC1OUT                            00000007
+MC2OUT                            00000006
+MMODE1                            0000012A
+MSK                               00000093
+MSK0                              00000000
+MSK1                              00000001
+MSK2                              00000002
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 27
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+MSK3                              00000003
+MSK4                              00000004
+MSK5                              00000005
+MSK6                              00000006
+MSK7                              00000007
+NG                                0000001A
+NMODE1                            00000124
+NMODE10                           000001DF
+NMODE2                            0000013F
+NMODE3                            00000153
+NMODE31                           00000205
+NMODE32                           0000020D
+NMODE4                            00000167
+NMODE5                            0000017B
+NMODE51                           0000021D
+NMODE52                           00000225
+NMODE58                           00000231
+NMODE59                           0000023D
+NMODE6                            0000018F
+NMODE7                            000001A3
+NMODE8                            000001B7
+NMODE9                            000001CB
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BO                            00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+OERR                              00000001
+ONESECTIMER                       00000001
+OPTION_REG                        00000081
+OSCCON                            0000008F
+OSCTUNE                           00000090
+OSFIE                             00000007
+OSFIF                             00000007
+OSTS                              00000003
+P                                 00000004
+P1M0                              00000006
+P1M1                              00000007
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PDC0                              00000000
+PDC1                              00000001
+PDC2                              00000002
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 28
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PDC3                              00000003
+PDC4                              00000004
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEN                               00000002
+PHASE1                            00000116
+PHASE10                           000001D1
+PHASE11                           000001E5
+PHASE18                           000001F9
+PHASE19                           000001FD
+PHASE2                            00000131
+PHASE3                            00000145
+PHASE31                           00000201
+PHASE32                           00000209
+PHASE38                           00000211
+PHASE39                           00000215
+PHASE4                            00000159
+PHASE5                            0000016D
+PHASE51                           00000219
+PHASE52                           00000221
+PHASE58                           00000229
+PHASE59                           00000235
+PHASE6                            00000181
+PHASE7                            00000195
+PHASE8                            000001A9
+PHASE9                            000001BD
+PHASEOFF                          000001F3
+PHASEON                           000001E9
+PHASETIMER                        00000002
+PIE1                              0000008C
+PIE2                              0000008D
+PIR1                              0000000C
+PIR2                              0000000D
+PORTA                             00000005
+PORTB                             00000006
+PORTC                             00000007
+PORTD                             00000008
+PORTE                             00000009
+PR2                               00000092
+PRSEN                             00000007
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+PSSAC0                            00000002
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+PSTRCON                           0000009D
+PULSR                             00000002
+PULSS                             00000003
+PWM1CON                           0000009B
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 29
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+R                                 00000002
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC3                               00000003
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCREG                             0000001A
+RCSTA                             00000018
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RE0                               00000000
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+READ_WRITE                        00000002
+RES1                              0000024F
+RES2                              00000251
+RESETLBL                          00000024
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 30
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RP0                               00000005
+RP1                               00000006
+RSEN                              00000001
+RX9                               00000006
+RX9D                              00000000
+R_NOT_W                           00000002
+R_W                               00000002
+S                                 00000003
+SBOREN                            00000004
+SCKP                              00000004
+SCS                               00000000
+SEC                               00000041
+SECTIMER                          00000004
+SEN                               00000000
+SENDB                             00000003
+SETUP                             00000000
+SMP                               00000007
+SPBRG                             00000099
+SPBRGH                            0000009A
+SPEN                              00000007
+SR0                               00000006
+SR1                               00000007
+SRCON                             00000185
+SREN                              00000005
+SSPADD                            00000093
+SSPBUF                            00000013
+SSPCON                            00000014
+SSPCON2                           00000091
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPMSK                            00000093
+SSPOV                             00000006
+SSPSTAT                           00000094
+STATUS                            00000003
+STRA                              00000000
+STRB                              00000001
+STRC                              00000002
+STRD                              00000003
+STRSYNC                           00000004
+SWDTEN                            00000000
+SYNC                              00000004
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 31
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T1GINV                            00000007
+T1GIV                             00000007
+T1GSS                             00000001
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000012
+TIMECHECK                         00000048
+TIMECHECK0                        00000049
+TIMECHECK10                       00000076
+TIMECHECK11                       0000007B
+TIMECHECK2                        0000004E
+TIMECHECK21                       00000080
+TIMECHECK22                       00000085
+TIMECHECK23                       0000008A
+TIMECHECK24                       0000008F
+TIMECHECK25                       00000094
+TIMECHECK26                       00000099
+TIMECHECK27                       0000009E
+TIMECHECK28                       000000A3
+TIMECHECK29                       000000A8
+TIMECHECK3                        00000053
+TIMECHECK30                       000000AD
+TIMECHECK31                       000000B2
+TIMECHECK32                       000000B7
+TIMECHECK33                       000000BC
+TIMECHECK34                       000000C1
+TIMECHECK35                       000000C6
+TIMECHECK36                       000000CB
+TIMECHECK37                       000000D0
+TIMECHECK38                       000000D5
+TIMECHECK39                       000000DA
+TIMECHECK4                        00000058
+TIMECHECK40                       000000DF
+TIMECHECK5                        0000005D
+TIMECHECK6                        00000062
+TIMECHECK7                        00000067
+TIMECHECK8                        0000006C
+TIMECHECK9                        00000071
+TIMECHECKY1                       000000E4
+TIMECHECKY11                      000000F8
+TIMECHECKY12                      000000FD
+TIMECHECKY13                      00000102
+TIMECHECKY14                      00000107
+TIMECHECKY15                      0000010C
+TIMECHECKY16                      00000111
+TIMECHECKY2                       000000E9
+TIMECHECKY3                       000000EE
+TIMECHECKY4                       000000F3
+TIMERTWOFIVE                      00000007
+TM                                00000006
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 32
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR1                              0000000E
+TMR1CS                            00000001
+TMR1GE                            00000006
+TMR1H                             0000000F
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TMR2                              00000011
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2ON                            00000002
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000085
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000086
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000087
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC3                            00000003
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000088
+TRISD0                            00000000
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+TRISD5                            00000005
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 33
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISD6                            00000006
+TRISD7                            00000007
+TRISE                             00000089
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRISE3                            00000003
+TRMT                              00000001
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             00000019
+TXSTA                             00000098
+UA                                00000001
+ULPWUE                            00000005
+ULPWUIE                           00000002
+ULPWUIF                           00000002
+VCFG0                             00000004
+VCFG1                             00000005
+VR0                               00000000
+VR1                               00000001
+VR2                               00000002
+VR3                               00000003
+VRCON                             00000097
+VREN                              00000007
+VROE                              00000006
+VRR                               00000005
+VRSS                              00000004
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000105
+WDTPS0                            00000001
+WDTPS1                            00000002
+WDTPS2                            00000003
+WDTPS3                            00000004
+WPUB                              00000095
+WPUB0                             00000000
+WPUB1                             00000001
+WPUB2                             00000002
+WPUB3                             00000003
+WPUB4                             00000004
+WPUB5                             00000005
+WPUB6                             00000006
+WPUB7                             00000007
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 34
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+WUE                               00000001
+Z                                 00000002
+_BOR21V                           00003EFF
+_BOR40V                           00003FFF
+_BOR4V_BOR21V                     00003EFF
+_BOR4V_BOR40V                     00003FFF
+_BOREN_NSLEEP                     00003EFF
+_BOREN_OFF                        00003CFF
+_BOREN_ON                         00003FFF
+_BOREN_SBODEN                     00003DFF
+_BOR_NSLEEP                       00003EFF
+_BOR_OFF                          00003CFF
+_BOR_ON                           00003FFF
+_BOR_SBODEN                       00003DFF
+_CONFIG1                          00002007
+_CONFIG2                          00002008
+_CPD_OFF                          00003FFF
+_CPD_ON                           00003F7F
+_CP_OFF                           00003FFF
+_CP_ON                            00003FBF
+_DEBUG_OFF                        00003FFF
+_DEBUG_ON                         00001FFF
+_DEVID1                           00002006
+_EC_OSC                           00003FFB
+_EXTRC                            00003FFF
+_EXTRCIO                          00003FFE
+_EXTRC_OSC_CLKOUT                 00003FFF
+_EXTRC_OSC_NOCLKOUT               00003FFE
+_FCMEN_OFF                        000037FF
+_FCMEN_ON                         00003FFF
+_FOSC_EC                          00003FFB
+_FOSC_EXTRC_CLKOUT                00003FFF
+_FOSC_EXTRC_NOCLKOUT              00003FFE
+_FOSC_HS                          00003FFA
+_FOSC_INTRC_CLKOUT                00003FFD
+_FOSC_INTRC_NOCLKOUT              00003FFC
+_FOSC_LP                          00003FF8
+_FOSC_XT                          00003FF9
+_HS_OSC                           00003FFA
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_IESO_OFF                         00003BFF
+_IESO_ON                          00003FFF
+_INTOSC                           00003FFD
+_INTOSCIO                         00003FFC
+_INTRC_OSC_CLKOUT                 00003FFD
+_INTRC_OSC_NOCLKOUT               00003FFC
+_LP_OSC                           00003FF8
+MPASM 5.76                           PRO.ASM   3-15-2018  7:56:19         PAGE 35
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_LVP_OFF                          00002FFF
+_LVP_ON                           00003FFF
+_MCLRE_OFF                        00003FDF
+_MCLRE_ON                         00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FEF
+_WDTE_OFF                         00003FF7
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FF7
+_WDT_ON                           00003FFF
+_WRT_1FOURTH                      00003BFF
+_WRT_256                          00003DFF
+_WRT_HALF                         000039FF
+_WRT_OFF                          00003FFF
+_XT_OSC                           00003FF9
+__16F887                          00000001
+
+Errors   :     0
+Warnings :   122 reported,     0 suppressed
+Messages :    25 reported,     0 suppressed
+
+
